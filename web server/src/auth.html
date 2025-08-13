@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AzerothCore WotLK - Account Registration</title>
+    <meta name="description" content="Create your AzerothCore World of Warcraft account">
+    <style>
+        /* Reset and base styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: #e8e8e8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        /* Container styles */
+        .auth-container {
+            background: rgba(30, 30, 30, 0.95);
+            backdrop-filter: blur(15px);
+            border: 2px solid #4a5568;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            width: 100%;
+            max-width: 450px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .auth-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #3182ce, #805ad5, #d69e2e);
+        }
+        
+        /* Header styles */
+        .form-header {
+            background: linear-gradient(135deg, #2d3748, #4a5568);
+            padding: 24px;
+            text-align: center;
+            color: #f7fafc;
+            border-bottom: 1px solid #4a5568;
+        }
+        
+        .form-header h1 {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #ffd700;
+        }
+        
+        .form-header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        /* Form styles */
+        .form-content {
+            padding: 32px;
+        }
+        
+        .form-group {
+            margin-bottom: 24px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #e2e8f0;
+        }
+        
+        .form-input {
+            width: 100%;
+            background: rgba(45, 55, 72, 0.8);
+            border: 2px solid #4a5568;
+            color: #f7fafc;
+            padding: 14px 16px;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #3182ce;
+            box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+            background: rgba(45, 55, 72, 0.9);
+        }
+        
+        .form-input.error {
+            border-color: #e53e3e;
+            box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.1);
+        }
+        
+        .form-input.success {
+            border-color: #38a169;
+            box-shadow: 0 0 0 3px rgba(56, 161, 105, 0.1);
+        }
+        
+        /* Button styles */
+        .form-button {
+            width: 100%;
+            background: linear-gradient(135deg, #3182ce, #2c5282);
+            color: #ffffff;
+            border: none;
+            padding: 16px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .form-button:hover:not(:disabled) {
+            background: linear-gradient(135deg, #2c5282, #2a4365);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(49, 130, 206, 0.3);
+        }
+        
+        .form-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .form-button .loading-spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ffffff;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+        
+        .form-button.loading .loading-spinner {
+            display: inline-block;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Password strength indicator */
+        .password-strength {
+            height: 6px;
+            background: #2d3748;
+            margin-top: 8px;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .strength-bar {
+            height: 100%;
+            width: 0%;
+            transition: all 0.3s ease;
+            border-radius: 3px;
+        }
+        
+        .strength-weak { width: 25%; background: #e53e3e; }
+        .strength-fair { width: 50%; background: #dd6b20; }
+        .strength-good { width: 75%; background: #d69e2e; }
+        .strength-strong { width: 100%; background: #38a169; }
+        
+        /* Alert styles */
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .alert.error {
+            background: rgba(229, 62, 62, 0.1);
+            border: 1px solid #e53e3e;
+            color: #feb2b2;
+        }
+        
+        .alert.success {
+            background: rgba(56, 161, 105, 0.1);
+            border: 1px solid #38a169;
+            color: #9ae6b4;
+        }
+        
+        .alert.hidden {
+            display: none;
+        }
+        
+        /* Helper text */
+        .helper-text {
+            font-size: 12px;
+            color: #a0aec0;
+            margin-top: 4px;
+        }
+        
+        /* Checkbox styles */
+        .checkbox-group {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        
+        .checkbox-input {
+            width: 18px;
+            height: 18px;
+            margin-top: 2px;
+            accent-color: #3182ce;
+        }
+        
+        .checkbox-label {
+            font-size: 14px;
+            line-height: 1.5;
+            color: #e2e8f0;
+        }
+        
+        .checkbox-label a {
+            color: #ffd700;
+            text-decoration: none;
+        }
+        
+        .checkbox-label a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Footer link */
+        .footer-link {
+            text-align: center;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #4a5568;
+            font-size: 14px;
+            color: #a0aec0;
+        }
+        
+        .footer-link a {
+            color: #ffd700;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .footer-link a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .auth-container {
+                max-width: 100%;
+            }
+            
+            .form-content {
+                padding: 24px;
+            }
+            
+            .form-header {
+                padding: 20px;
+            }
+            
+            .form-header h1 {
+                font-size: 24px;
+            }
+        }
+        
+        /* Focus visible for accessibility */
+        .form-input:focus-visible,
+        .form-button:focus-visible,
+        .checkbox-input:focus-visible {
+            outline: 2px solid #3182ce;
+            outline-offset: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="form-header">
+            <h1>AzerothCore</h1>
+            <p>Wrath of the Lich King - Account Registration</p>
+        </div>
+        
+        <div class="form-content">
+            <form id="registerForm" method="post" action="registration-page.php" novalidate>
+                <div class="alert hidden" id="formAlert" role="alert" aria-live="polite"></div>
+                
+                <div class="form-group">
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" 
+                           id="username" 
+                           name="username" 
+                           class="form-input" 
+                           placeholder="Enter your username" 
+                           required
+                           minlength="3" 
+                           maxlength="16"
+                           pattern="^[a-zA-Z0-9]*$"
+                           autocomplete="username"
+                           aria-describedby="username-help">
+                    <div class="helper-text" id="username-help">3-16 characters, letters and numbers only</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email" class="form-label">Email Address</label>
+                    <input type="email" 
+                           id="email" 
+                           name="email" 
+                           class="form-input" 
+                           placeholder="Enter your email address" 
+                           required
+                           autocomplete="email"
+                           aria-describedby="email-help">
+                    <div class="helper-text" id="email-help">We'll use this for account recovery</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" 
+                           id="password" 
+                           name="password" 
+                           class="form-input" 
+                           placeholder="Enter your password" 
+                           required
+                           minlength="8"
+                           autocomplete="new-password"
+                           aria-describedby="password-help password-strength">
+                    <div class="password-strength">
+                        <div class="strength-bar" id="passwordStrengthBar"></div>
+                    </div>
+                    <div class="helper-text" id="password-help">Minimum 8 characters with uppercase, lowercase, and numbers</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password_confirm" class="form-label">Confirm Password</label>
+                    <input type="password" 
+                           id="password_confirm" 
+                           name="password_confirm" 
+                           class="form-input" 
+                           placeholder="Confirm your password" 
+                           required
+                           autocomplete="new-password"
+                           aria-describedby="password-confirm-help">
+                    <div class="helper-text" id="password-confirm-help">Must match your password</div>
+                </div>
+                
+                <div class="checkbox-group">
+                    <input type="checkbox" 
+                           id="terms" 
+                           name="terms" 
+                           class="checkbox-input" 
+                           required
+                           aria-describedby="terms-help">
+                    <label for="terms" class="checkbox-label" id="terms-help">
+                        I agree to the <a href="#" onclick="showTerms(); return false;">Terms of Service</a> and <a href="#" onclick="showPrivacy(); return false;">Privacy Policy</a>
+                    </label>
+                </div>
+                
+                <button type="submit" class="form-button" id="submitButton">
+                    <span class="loading-spinner"></span>
+                    <span class="button-text">Create Account</span>
+                </button>
+            </form>
+            
+            <div class="footer-link">
+                <p>Already have an account? <a href="login.php">Sign in here</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Registration Form Handler
+        class RegistrationForm {
+            constructor() {
+                this.form = document.getElementById('registerForm');
+                this.alertBox = document.getElementById('formAlert');
+                this.submitButton = document.getElementById('submitButton');
+                this.inputs = {
+                    username: document.getElementById('username'),
+                    email: document.getElementById('email'),
+                    password: document.getElementById('password'),
+                    passwordConfirm: document.getElementById('password_confirm'),
+                    terms: document.getElementById('terms')
+                };
+                this.strengthBar = document.getElementById('passwordStrengthBar');
+                
+                this.init();
+            }
+            
+            init() {
+                // Real-time validation
+                this.inputs.username.addEventListener('input', () => this.validateUsername());
+                this.inputs.email.addEventListener('input', () => this.validateEmail());
+                this.inputs.password.addEventListener('input', () => {
+                    this.validatePassword();
+                    this.updatePasswordStrength();
+                });
+                this.inputs.passwordConfirm.addEventListener('input', () => this.validatePasswordConfirm());
+                
+                // Form submission
+                this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+                
+                // Prevent form submission on Enter in input fields (except submit button)
+                this.form.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && e.target.type !== 'submit') {
+                        e.preventDefault();
+                    }
+                });
+            }
+            
+            validateUsername() {
+                const username = this.inputs.username.value.trim();
+                const input = this.inputs.username;
+                
+                if (username.length === 0) {
+                    this.setInputState(input, 'neutral');
+                    return true; // Don't show error for empty field during typing
+                }
+                
+                if (username.length < 3 || username.length > 16) {
+                    this.setInputState(input, 'error');
+                    return false;
+                }
+                
+                if (!/^[a-zA-Z0-9]*$/.test(username)) {
+                    this.setInputState(input, 'error');
+                    return false;
+                }
+                
+                this.setInputState(input, 'success');
+                return true;
+            }
+            
+            validateEmail() {
+                const email = this.inputs.email.value.trim();
+                const input = this.inputs.email;
+                
+                if (email.length === 0) {
+                    this.setInputState(input, 'neutral');
+                    return true;
+                }
+                
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(email)) {
+                    this.setInputState(input, 'error');
+                    return false;
+                }
+                
+                this.setInputState(input, 'success');
+                return true;
+            }
+            
+            validatePassword() {
+                const password = this.inputs.password.value;
+                const input = this.inputs.password;
+                
+                if (password.length === 0) {
+                    this.setInputState(input, 'neutral');
+                    return true;
+                }
+                
+                if (password.length < 8) {
+                    this.setInputState(input, 'error');
+                    return false;
+                }
+                
+                const strength = this.calculatePasswordStrength(password);
+                if (strength < 2) {
+                    this.setInputState(input, 'error');
+                    return false;
+                }
+                
+                this.setInputState(input, 'success');
+                return true;
+            }
+            
+            validatePasswordConfirm() {
+                const password = this.inputs.password.value;
+                const passwordConfirm = this.inputs.passwordConfirm.value;
+                const input = this.inputs.passwordConfirm;
+                
+                if (passwordConfirm.length === 0) {
+                    this.setInputState(input, 'neutral');
+                    return true;
+                }
+                
+                if (password !== passwordConfirm) {
+                    this.setInputState(input, 'error');
+                    return false;
+                }
+                
+                this.setInputState(input, 'success');
+                return true;
+            }
+            
+            setInputState(input, state) {
+                input.classList.remove('error', 'success');
+                if (state === 'error') {
+                    input.classList.add('error');
+                } else if (state === 'success') {
+                    input.classList.add('success');
+                }
+            }
+            
+            calculatePasswordStrength(password) {
+                let strength = 0;
+                
+                if (password.length >= 8) strength++;
+                if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+                if (/[0-9]/.test(password)) strength++;
+                if (/[^a-zA-Z0-9]/.test(password)) strength++;
+                
+                return strength;
+            }
+            
+            updatePasswordStrength() {
+                const password = this.inputs.password.value;
+                const strength = this.calculatePasswordStrength(password);
+                
+                this.strengthBar.className = 'strength-bar';
+                
+                if (password.length === 0) {
+                    return;
+                }
+                
+                switch (strength) {
+                    case 0:
+                    case 1:
+                        this.strengthBar.classList.add('strength-weak');
+                        break;
+                    case 2:
+                        this.strengthBar.classList.add('strength-fair');
+                        break;
+                    case 3:
+                        this.strengthBar.classList.add('strength-good');
+                        break;
+                    case 4:
+                        this.strengthBar.classList.add('strength-strong');
+                        break;
+                }
+            }
+            
+            validateForm() {
+                let isValid = true;
+                const errors = [];
+                
+                // Validate username
+                const username = this.inputs.username.value.trim();
+                if (!username) {
+                    errors.push('Username is required');
+                    isValid = false;
+                } else if (username.length < 3 || username.length > 16) {
+                    errors.push('Username must be between 3 and 16 characters');
+                    isValid = false;
+                } else if (!/^[a-zA-Z0-9]*$/.test(username)) {
+                    errors.push('Username can only contain letters and numbers');
+                    isValid = false;
+                }
+                
+                // Validate email
+                const email = this.inputs.email.value.trim();
+                if (!email) {
+                    errors.push('Email address is required');
+                    isValid = false;
+                } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                    errors.push('Please enter a valid email address');
+                    isValid = false;
+                }
+                
+                // Validate password
+                const password = this.inputs.password.value;
+                if (!password) {
+                    errors.push('Password is required');
+                    isValid = false;
+                } else if (password.length < 8) {
+                    errors.push('Password must be at least 8 characters long');
+                    isValid = false;
+                } else if (this.calculatePasswordStrength(password) < 2) {
+                    errors.push('Password is too weak. Include uppercase, lowercase, and numbers');
+                    isValid = false;
+                }
+                
+                // Validate password confirmation
+                const passwordConfirm = this.inputs.passwordConfirm.value;
+                if (!passwordConfirm) {
+                    errors.push('Password confirmation is required');
+                    isValid = false;
+                } else if (password !== passwordConfirm) {
+                    errors.push('Passwords do not match');
+                    isValid = false;
+                }
+                
+                // Validate terms
+                if (!this.inputs.terms.checked) {
+                    errors.push('You must accept the Terms of Service');
+                    isValid = false;
+                }
+                
+                if (!isValid) {
+                    this.showAlert(errors.join('<br>'), 'error');
+                }
+                
+                return isValid;
+            }
+            
+            async handleSubmit(e) {
+                e.preventDefault();
+                
+                this.clearAlert();
+                
+                if (!this.validateForm()) {
+                    return;
+                }
+                
+                this.setLoading(true);
+                
+                try {
+                    // Submit to the PHP backend
+                    const formData = new FormData(this.form);
+                    
+                    const response = await fetch('registration-page.php', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (response.ok) {
+                        // If PHP handles the redirect, we won't reach here
+                        // But if it returns JSON, we can handle it
+                        const text = await response.text();
+                        
+                        // Check if response contains success message
+                        if (text.includes('Account created successfully')) {
+                            this.showAlert('Account created successfully! You can now log in.', 'success');
+                            this.form.reset();
+                            this.strengthBar.className = 'strength-bar';
+                            
+                            // Redirect after 2 seconds
+                            setTimeout(() => {
+                                window.location.href = 'login.php';
+                            }, 2000);
+                        } else {
+                            // Parse error from PHP response
+                            const errorMatch = text.match(/<div class="message error">(.*?)<\/div>/);
+                            if (errorMatch) {
+                                this.showAlert(errorMatch[1], 'error');
+                            } else {
+                                this.showAlert('Registration failed. Please try again.', 'error');
+                            }
+                        }
+                    } else {
+                        throw new Error('Network error');
+                    }
+                } catch (error) {
+                    console.error('Registration error:', error);
+                    this.showAlert('Network error. Please check your connection and try again.', 'error');
+                } finally {
+                    this.setLoading(false);
+                }
+            }
+            
+            setLoading(loading) {
+                this.submitButton.disabled = loading;
+                if (loading) {
+                    this.submitButton.classList.add('loading');
+                } else {
+                    this.submitButton.classList.remove('loading');
+                }
+            }
+            
+            showAlert(message, type) {
+                this.alertBox.innerHTML = message;
+                this.alertBox.className = `alert ${type}`;
+                this.alertBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+            
+            clearAlert() {
+                this.alertBox.classList.add('hidden');
+            }
+        }
+        
+        // Modal functions for Terms and Privacy
+        function showTerms() {
+            alert('Terms of Service:\n\n1. You must be 13 years or older to create an account.\n2. One account per person.\n3. No cheating, hacking, or exploiting.\n4. Be respectful to other players.\n5. Follow all server rules and guidelines.\n\nBy creating an account, you agree to these terms.');
+        }
+        
+        function showPrivacy() {
+            alert('Privacy Policy:\n\n1. We collect only necessary information for account creation.\n2. Your email is used for account recovery only.\n3. We do not share your information with third parties.\n4. Your data is stored securely.\n5. You can request account deletion at any time.\n\nWe respect your privacy and protect your data.');
+        }
+        
+        // Initialize the form when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            new RegistrationForm();
+        });
+    </script>
+</body>
+</html>
+
